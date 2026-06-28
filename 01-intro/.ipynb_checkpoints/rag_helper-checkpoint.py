@@ -34,25 +34,19 @@ class RAGBase:
         self.model = model
 
     def search(self, query, num_results=5):
-        boost_dict = {'question': 3.0, 'section': 0.5}
-        filter_dict = {'course': self.course}
-
+        boost_dict = {'content': 3.0, 'filename': 0.5}
         return self.index.search(
             query,
             num_results=num_results,
             boost_dict=boost_dict,
-            filter_dict=filter_dict
         )
 
     def build_context(self, search_results):
         lines = []
-
         for doc in search_results:
-            lines.append(doc['section'])
-            lines.append('Q: ' + doc['question'])
-            lines.append('A: ' + doc['answer'])
+            lines.append(doc['filename'])
+            lines.append(doc['content'])
             lines.append('')
-
         return '\n'.join(lines).strip()
 
     def build_prompt(self, query, search_results):
@@ -61,21 +55,21 @@ class RAGBase:
             question=query, context=context
         )
 
-   def llm(self, prompt):
-    input_messages = [
-        {'role': 'system', 'content': self.instructions},
-        {'role': 'user', 'content': prompt}
-    ]
-
-    response = self.llm_client.chat.completions.create(
-        model=self.model,
-        messages=input_messages
-    )
-
-    return response.choices[0].message.content 
-
+    def llm(self, prompt):
+        input_messages = [
+            {'role': 'system', 'content': self.instructions},
+            {'role': 'user', 'content': prompt}
+        ]
+        response = self.llm_client.chat.completions.create(
+            model=self.model,
+            messages=input_messages
+        )
+        return response  # <- whole response now, not just the text
+    
     def rag(self, query):
         search_results = self.search(query)
         prompt = self.build_prompt(query, search_results)
-        answer = self.llm(prompt)
-        return answer
+        response = self.llm(prompt)
+        answer = response.choices[0].message.content
+        usage = response.usage
+        return answer, usage
