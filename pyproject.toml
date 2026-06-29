@@ -8,7 +8,9 @@ dependencies = [
     "gitsource>=0.0.5",
     "minsearch>=0.1.1",
     "openai>=2.44.0",
+    "torch>=2.12.1",
     "toyaikit>=0.0.11",
+    "transformers>=5.12.1",
 ]
 
 [dependency-groups]
